@@ -4,7 +4,7 @@ pragma solidity ^0.8.7;
 import "@chainlink/contracts/src/v0.8/Chainlink.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
+//import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 
 /**
  * Request testnet LINK and ETH here: https://faucets.chain.link/
@@ -19,6 +19,7 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
 
     // Data to receive
     string public nationality;
+    mapping (string => string) nationalities;
 
     event RequestVolume(bytes32 indexed requestId, string volume);
 
@@ -40,8 +41,10 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
     /**
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
+     *
+     * @param _userId: string without " ", as passed per URL
      */
-    function requestNationalityData() public returns (bytes32 requestId) {
+    function requestNationalityData(string memory _userId) public returns (bytes32 requestId) {
         Chainlink.Request memory req = buildChainlinkRequest(
             jobId,
             address(this),
@@ -51,7 +54,7 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
         // Set the URL to perform the GET request on
         req.add(
             "get",
-            "https://devos-sem-net.vercel.app/api/addresses/0x71bE63f3384f5fb98995898A86B02Fb2426c5788"
+            string.concat("https://devos-sem-net.vercel.app/api/addresses/", _userId)
         );
 
         /** Devos Testdata-JSON Format
@@ -85,13 +88,13 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
     }
 
     /**
-     * Allow withdraw of Link tokens from the contract
+     * Withdraw Link tokens from contract
      */
-    function withdrawLink() public onlyOwner {
+    function withdrawLinkFromContract() public onlyOwner {
         LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
         require(
             link.transfer(msg.sender, link.balanceOf(address(this))),
-            "Unable to transfer"
+            "Unable to transfer LINK from contract to owner"
         );
     }
 }
