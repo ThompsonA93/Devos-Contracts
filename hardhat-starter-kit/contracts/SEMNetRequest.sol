@@ -14,6 +14,8 @@ import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
  */
 contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
+
+    address private oracle;
     bytes32 private jobId;
     uint256 private fee;
 
@@ -31,11 +33,21 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
      * jobId: ca98366cc7314957b8c012c72f05aeeb
      *
      */
-    constructor() ConfirmedOwner(msg.sender) {
-        setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);      // https://docs.chain.link/resources/link-token-contracts
-        setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);     // https://docs.chain.link/any-api/testnet-oracles 
-        jobId = "7d80a6386ef543a3abb52817f6707e3b";                         // https://docs.chain.link/any-api/testnet-oracles#job-ids :: GET>string: 
-        fee = (1 * LINK_DIVISIBILITY) / 10;                                 // 0,1 * 10**18 (Varies by network and job)
+    constructor(address _oracle, bytes32 _jobId, uint256 _fee, address _link) ConfirmedOwner(msg.sender) {
+        // setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);      // https://docs.chain.link/resources/link-token-contracts
+        // setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);     // https://docs.chain.link/any-api/testnet-oracles 
+        // jobId = "7d80a6386ef543a3abb52817f6707e3b";                         // https://docs.chain.link/any-api/testnet-oracles#job-ids :: GET>string: 
+        // fee = (1 * LINK_DIVISIBILITY) / 10;                                 // 0,1 * 10**18 (Varies by network and job)
+    
+        if (_link == address(0)) {
+            setPublicChainlinkToken();
+        } else {
+            setChainlinkToken(_link);
+        }
+
+        oracle = _oracle;
+        jobId = _jobId;
+        fee = _fee;
     }
 
     /**
@@ -54,7 +66,7 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
         // Set the URL to perform the GET request on
         req.add(
             "get",
-            string.concat("https://devos-sem-net.vercel.app/api/addresses/", _userId)
+            string(abi.encodePacked("https://devos-sem-net.vercel.app/api/addresses/", _userId))
         );
 
         /** Devos Testdata-JSON Format
@@ -73,7 +85,7 @@ contract SEMNetRequest is ChainlinkClient, ConfirmedOwner {
         // request.add("path", "RAW.ETH.USD.VOLUME24HOUR"); // Chainlink nodes prior to 1.0.0 support this format
         req.add("path", "0,nationality");                   // Chainlink nodes 1.0.0 and later support this format
 
-        return sendChainlinkRequest(req, fee);
+        return sendChainlinkRequestTo(oracle, req, fee);
     }
 
     /**
