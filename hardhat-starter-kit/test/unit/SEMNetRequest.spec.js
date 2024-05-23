@@ -2,11 +2,12 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers")
 const { networkConfig, developmentChains } = require("../../helper-hardhat-config")
 const { assert, expect } = require("chai")
 
+
+// Adjusted code, @see APIConsumer.spec.js
 !developmentChains.includes(network.name)
     ? describe.skip
-    : describe("API SEMNetRequest Unit Tests", async function () {
+    : describe("SEMNetRequest API Unit Tests", async function () {
 
-        // @see APIConsumer.spec.js
         async function deployAPISEMNetRequestFixture() {
             const [deployer] = await ethers.getSigners()
 

@@ -16,7 +16,6 @@ contract APIConsumer is ChainlinkClient {
     uint256 private immutable fee;
 
     event DataFullfilled(uint256 volume);
-
     /**
      * @notice Executes once when a contract is created to initialize state variables
      *
