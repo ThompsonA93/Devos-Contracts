@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity ^0.8.7;
 
 /**
  * @dev Interface to call functionality of archive smart contract
  */
-interface IBallotArchive {
+interface Devos_ETHNET_ArchiveInterface {
     function createNewBallot(address _creator, address _ballot) external;
 }
 
 /**
  * @title BallotOpen
  * @author ThompsonA93
- * @notice Stores information on a single ballot. Anyone may cast a vote
+ * @notice Stores information on a single ballot.
  * @dev Dependant on primary smart contract "BallotArchive", @see constructor()
  */
-contract BallotOpen {
+contract Devos_ETHNET_Ballot {
     struct Ballot {
         address archiveAddress;
         address creator;
         address ballotAddress;
         string title;
         string metainfo;
+        string allowedNationality;
         uint startTime;
         uint endTime;
         uint totalVotes;
@@ -37,6 +38,12 @@ contract BallotOpen {
     mapping(address => uint8) public votes;
 
     /**
+     * @dev Iterable storage for all addresses that voted
+     * FIXME :: Experimental, not sure if necessary at all 
+     */
+    address[] voters;
+
+    /**
      * @param _archiveAddress On-Chain location of Archive smart contract. See: "./BallotArchive.sol"
      * @param _title as ballot title
      * @param _metainfo as information on the ballot
@@ -48,7 +55,8 @@ contract BallotOpen {
         address _archiveAddress,
         string memory _title,
         string memory _metainfo,
-        uint _votingDays
+        uint _votingDays,
+        string memory _allowedNationality
     ) {
         ballot = Ballot(
             _archiveAddress,
@@ -56,13 +64,14 @@ contract BallotOpen {
             address(this),
             _title,
             _metainfo,
+            _allowedNationality,
             block.timestamp,
             block.timestamp + (_votingDays * 1 days),
             0,
             0
         );
 
-        IBallotArchive(ballot.archiveAddress).createNewBallot(
+        Devos_ETHNET_ArchiveInterface(ballot.archiveAddress).createNewBallot(
             ballot.creator,
             ballot.ballotAddress
         );
@@ -77,14 +86,6 @@ contract BallotOpen {
     }
 
     /**
-     * @param _voter address to check via chainlink API call.
-     */
-    modifier validNationality(address _voter) {
-        require(true);
-        _;
-    }
-
-    /**
      * @dev modifier requiring that following code is only executed within given time limit
      */
     modifier validVotingTime() {
@@ -92,16 +93,15 @@ contract BallotOpen {
         _;
     }
 
-
-
     /**
      * @dev casts a vote given modifiers and increments voting counts
      * @param _choice as 1 (No) or 2 (Yes).
      */
     function vote(
         uint8 _choice
-    ) public validVotingTime hasNotVoted(msg.sender) validNationality(msg.sender) {
+    ) public validVotingTime hasNotVoted(msg.sender) {
         votes[msg.sender] = _choice;
+        voters.push(msg.sender);
         if (_choice == 2) {
             ballot.proVotes += 1;
         }

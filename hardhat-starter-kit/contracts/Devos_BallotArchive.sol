@@ -7,7 +7,7 @@ pragma solidity ^0.8;
  * @notice Version 3; Stores ballots and their creators in form of mappings
  * @dev Storing data by external smart contract calls.
  */
-contract BallotArchive{
+contract Devos_Archive {
     /****************************************/
     /* Variables                            */
     /****************************************/
@@ -40,7 +40,7 @@ contract BallotArchive{
     /**
      * Require that one Ballot has exactly one Address.
      */
-    modifier ballotDoesNotExist(address _ballot){
+    modifier ballotDoesNotExist(address _ballot) {
         require(ballots[_ballot] == 0);
         _;
     }
@@ -51,7 +51,7 @@ contract BallotArchive{
     /**
      * @dev Setup contract with ownership. TODO -- May be relevant later
      */
-    constructor(){
+    constructor() {
         archiveOwner = msg.sender;
         archiveAddress = address(this);
     }
@@ -60,22 +60,25 @@ contract BallotArchive{
      * @param _creator as specified wallet ID
      * @param _ballot as specified smart contract address
      */
-    function createNewBallot(address _creator, address _ballot) external ballotDoesNotExist(_ballot) {
+    function createNewBallot(
+        address _creator,
+        address _ballot
+    ) external ballotDoesNotExist(_ballot) {
         creators[_creator].push(_ballot);
 
         ballots[_ballot] = ballotCount;
         ballotsRLT[ballotCount] = _ballot;
-        
+
         ballotCount += 1;
     }
 
     /**
      * @dev Iterate through RLT and fetches ballot address
      */
-    function getAllBallots() public view returns(address[] memory){
-        address[] memory retSet = new address[](ballotCount-1);
-        for(uint i = 1; i < ballotCount; i++){
-            retSet[i-1] = ballotsRLT[i];
+    function getAllBallots() public view returns (address[] memory) {
+        address[] memory retSet = new address[](ballotCount - 1);
+        for (uint i = 1; i < ballotCount; i++) {
+            retSet[i - 1] = ballotsRLT[i];
         }
         return retSet;
     }
@@ -84,7 +87,9 @@ contract BallotArchive{
      * @param _creator wallet id to scan for
      * @return address[] as set of deployed contracts from _creator
      */
-    function getBallotsByCreator(address _creator) public view returns(address[] memory){
+    function getBallotsByCreator(
+        address _creator
+    ) public view returns (address[] memory) {
         return creators[_creator];
     }
 
@@ -92,7 +97,7 @@ contract BallotArchive{
      * @param _ballot smart contract to scan for
      * @return address of deployed contract or null-address
      */
-    function getBallotByAddress(address _ballot) public view returns(address){
+    function getBallotByAddress(address _ballot) public view returns (address) {
         return (ballots[_ballot] > 0) ? _ballot : address(0);
     }
 }
