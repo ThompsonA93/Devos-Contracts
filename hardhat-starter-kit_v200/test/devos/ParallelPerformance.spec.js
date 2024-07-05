@@ -47,6 +47,8 @@ const writeLog = (testcase, testcaseId, voters, ballots, requiredTime, costEth, 
     : describe("# Sequential mass voting system stress tests on ballot deployment", async function () {
         
         it("ID1 :: Deployment of Ballots (1 Voter, 10 Ballots)", async function () {
+            assert(false)
+
             let amountOfContracts = 10;
             const [voterOne] = await ethers.getSigners();
             const chainId = network.config.chainId

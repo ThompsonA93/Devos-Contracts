@@ -174,7 +174,6 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
         nationalities[msg.sender] = _nationality;
         if(Strings.equal(_nationality, ballot.allowedNationality)){
             votes[msg.sender] = addressInteractions[msg.sender];
-
             if(votes[msg.sender] == 1){
                 ballot.totalVotes += 1;
             } else {

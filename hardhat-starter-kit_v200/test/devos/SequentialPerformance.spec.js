@@ -55,6 +55,7 @@ const writeLog = (testcase, testcaseId, voters, ballots, requiredTime, costEth, 
     ? describe.skip
     : describe("# Sequential mass voting system stress tests on ballot deployment", async function () {
         it("Deployment of Ballots (1 Voter, 25 Ballots)", async function () {
+            assert(false)
             let amountOfContracts = 25;
             const [voterOne] = await ethers.getSigners();
             const chainId = network.config.chainId
@@ -137,6 +138,7 @@ const writeLog = (testcase, testcaseId, voters, ballots, requiredTime, costEth, 
         /*  Voting on Ballots
         /**********************************************************************************************************/
         it("Voting on Ballots (1 Voter, 25 Vote)", async function () {
+            assert(false)
             let amountOfVotes = 25;
             const [deployer, voter] = await ethers.getSigners();
             const chainId = network.config.chainId
