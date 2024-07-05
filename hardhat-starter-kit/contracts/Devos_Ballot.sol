@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@chainlink/contracts/src/v0.8/Chainlink.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+
 //import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 
 /**
@@ -18,7 +19,7 @@ interface Devos_ArchiveInterface {
 /**
  * Contract resembling a voting ballot for the Devos-Project.
  * Asynchronously fetches any interactive information during contract activation, from Web3 and blockchain
- * Aggregation over all given votings after 
+ * Aggregation over all given votings after
  *
  * Chainlink HTTP-GET Request https://docs.chain.link/any-api/get-request/examples/single-word-response
  */
@@ -39,9 +40,7 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
     }
     Ballot ballot;
 
-
-    string public nationality; // TODO :: Eliminate after testing
-    address[] public voters;
+    mapping(address => uint8) public addressInteractions;
     mapping(address => string) public nationalities;
     mapping(address => uint8) public votes;
 
@@ -63,9 +62,9 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
         string memory _metainfo,
         uint256 _votingDays,
         string memory _allowedNationality,
-        address _oracle, 
-        bytes32 _jobId, 
-        uint256 _fee, 
+        address _oracle,
+        bytes32 _jobId,
+        uint256 _fee,
         address _link
     ) ConfirmedOwner(msg.sender) {
         // Initialise Ballot
@@ -82,37 +81,11 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
             0
         );
 
-        oracle = _oracle;
-        jobId = _jobId;
-        fee = _fee;
-        
-        // Oracles
-        if (_oracle==address(0)){
-            setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD); // https://docs.chain.link/any-api/testnet-oracles
-        } else {
-            setChainlinkOracle(_oracle);
-        }
-        
-        // Link-Token
-        if (_link == address(0)) {
-            setPublicChainlinkToken();
-        } else {
-            setChainlinkToken(_link);
-        }
-        
-        // Job-Id
-        if (_jobId.length == 0){
-            jobId = "7d80a6386ef543a3abb52817f6707e3b";
-        } else {
-            jobId = _jobId;
-        }
-
-        // Fee
-        if (_fee == 0){
-            _fee = (1 * LINK_DIVISIBILITY) / 10;
-        } else {
-            fee = _fee;
-        }
+        // https://docs.chain.link/any-api/testnet-oracles        
+        _oracle == address(0) ? setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD) : setChainlinkOracle(_oracle);
+        _link == address(0) ? setPublicChainlinkToken() : setChainlinkToken(_link);
+        _jobId.length == 0 ? jobId = "7d80a6386ef543a3abb52817f6707e3b" : jobId = _jobId;
+        _fee == 0 ? fee = (1 * LINK_DIVISIBILITY) / 100 : fee = _fee;
 
         // setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);   // https://docs.chain.link/resources/link-token-contracts
         // setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);  // https://docs.chain.link/any-api/testnet-oracles
@@ -125,6 +98,7 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
             ballot.ballotAddress
         );
     }
+
     
 
     /**
@@ -135,34 +109,36 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
         _;
     }
 
-    /**
-     * @dev modifier requiring that following code is only executed within given time limit
-     */
+    modifier wasNotChecked(address _voter){
+        require(addressInteractions[msg.sender] != 1 && addressInteractions[msg.sender] != 2);
+        _;
+    }
+
     modifier validVotingTime() {
         require(block.timestamp < ballot.endTime);
         _;
     }
 
+    modifier validVoteChoice(uint _vote){
+        require(_vote == 1 || _vote == 2);
+        _;
+    }
+
+
     /**
-     * Cast a vote. 
+     * Cast a vote.
      * Asynchronously collects the voting input and the voters nationality from the semantic web backend.
      */
-    function vote(uint8 _choice)
-        public
-        validVotingTime
-        //hasNotVoted(msg.sender)   // TODO :: Removed to simplify complexity on performance testing
-        returns (bytes32 requestId)
-    {
-        votes[msg.sender] = _choice;
-        voters.push(msg.sender);
+    function callVote(uint8 _vote) public validVotingTime wasNotChecked(msg.sender) validVoteChoice(_vote) hasNotVoted(msg.sender) returns (bytes32 requestId){
+        addressInteractions[msg.sender] = _vote;
 
         Chainlink.Request memory req = buildChainlinkRequest(
             jobId,
             address(this),
             this.fulfill.selector
         );
-        
-       /** Devos Testdata-JSON Format
+
+        /** Devos Testdata-JSON Format
         [
             {
             "_id": "65f8052a2f643f4584cd1f87",
@@ -185,46 +161,37 @@ contract Devos_Ballot is ChainlinkClient, ConfirmedOwner {
         // request.add("path", "0.nationality"); // Chainlink nodes prior to 1.0.0 support this format
 
         return sendChainlinkRequestTo(oracle, req, fee);
-
-        //return sendChainlinkRequest(req, fee);
     }
 
+
+
+
+
     /**
-     * Receive consented oracle response and store data 
+     * Receive consented oracle response and store data
      */
-    function fulfill(bytes32 _requestId, string memory _nationality)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
-        nationality = _nationality;
+    function fulfill( bytes32 _requestId, string memory _nationality ) public hasNotVoted(msg.sender) recordChainlinkFulfillment(_requestId) {
         nationalities[msg.sender] = _nationality;
+        if(Strings.equal(_nationality, ballot.allowedNationality)){
+            votes[msg.sender] = addressInteractions[msg.sender];
+
+            if(votes[msg.sender] == 1){
+                ballot.totalVotes += 1;
+            } else {
+                ballot.totalVotes += 1;
+                ballot.proVotes += 1;
+            }
+
+        } else {
+            // Ignore
+        }
+
         emit FulfilledDataRequest(_requestId, _nationality);
     }
 
 
 
-    /**
-     * Finalize the voting. No requirements during testing environment 
-     */
-    function finalizeVoting() public onlyOwner {
-        for (uint256 i = 0; i < voters.length; i++) {
-            if (
-                bytes(nationalities[voters[i]]).length ==
-                bytes(ballot.allowedNationality).length &&
-                keccak256(bytes(nationalities[voters[i]])) ==
-                keccak256(bytes(ballot.allowedNationality))
-            ){
-                if (votes[voters[i]] == 1) {
-                    // 1, voted No
-                    ballot.totalVotes += 1;
-                } else {
-                    // 2, Voted Yes
-                    ballot.totalVotes += 1;
-                    ballot.proVotes += 1;
-                }
-            } // else wrong nationality, ignore
-        }
-    }
+
 
     /**
      * Withdraw Link tokens from contract

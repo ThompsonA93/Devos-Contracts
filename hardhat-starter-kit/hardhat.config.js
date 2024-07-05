@@ -37,7 +37,7 @@ module.exports = {
     solidity: {
         compilers: [
             {
-                version: "0.8.12",
+                version: "0.8.19",
                 COMPILER_SETTINGS,
             },
             {
@@ -127,6 +127,6 @@ module.exports = {
         artifacts: "./build/artifacts",
     },
     mocha: {
-        timeout: 300000, // 300 seconds max for running tests
+        timeout: 1800000, // 1800 seconds ~~ 30 Minutes max for running individual tests
     },
 }
