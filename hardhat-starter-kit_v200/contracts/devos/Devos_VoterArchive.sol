@@ -17,12 +17,12 @@ import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
-    bytes32 private jobId;
-    uint256 private fee;
+    bytes32 public jobId;
+    uint256 public fee;
 
-    string private voter;
-    string private nationality;
-    mapping(string => string) public voterRegistry;
+    address public voter;
+    string public nationality;
+    mapping(address => string) public voterRegistry;
 
     event RequestNationalityById(bytes32 indexed requestId, string nationality);
 
@@ -42,7 +42,7 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
         fee = (1 * LINK_DIVISIBILITY) / 100; // 0,1 * 10**18 (Varies by network and job)
     }
 
-    modifier wasNotChecked(string memory _voter){
+    modifier wasNotChecked(address _voter){
         require(bytes(voterRegistry[_voter]).length == 0);
         _;
     }
@@ -51,7 +51,7 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
      * Create a Chainlink request to retrieve API response, find the target
      * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function requestVolumeData(string memory _voter) wasNotChecked(_voter) public returns (bytes32 requestId) {
+    function requestNationalityData(address _voter) wasNotChecked(_voter) public returns (bytes32 requestId) {
         voter = _voter;
 
         Chainlink.Request memory req = buildChainlinkRequest(
@@ -62,11 +62,19 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
 
         req.add(
             "get",
-            string.concat("https://devos-sem-net.vercel.app/api/addresses/", _voter)
+            string.concat("https://devos-sem-net.vercel.app/api/addresses/", Strings.toHexString(uint256(uint160(_voter)), 20))
         );
 
         req.add("path", "0,nationality");                   // Chainlink nodes 1.0.0 and later support this format
         return sendChainlinkRequest(req, fee);
+    }
+
+    function getNationalityData(address _voter) external view returns (string memory) {
+        return voterRegistry[_voter];
+    }
+
+    function DEBUG_setNationalityData(address _voter, string memory _nationality) public {
+        voterRegistry[_voter] = _nationality;
     }
 
     /**

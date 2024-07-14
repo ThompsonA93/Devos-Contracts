@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity ^0.8.12;
 
 /**
  * @title BallotArchive
@@ -7,7 +7,7 @@ pragma solidity ^0.8;
  * @notice Version 3; Stores ballots and their creators in form of mappings
  * @dev Storing data by external smart contract calls.
  */
-contract Devos_Archive {
+contract Devos_BallotArchive {
     /****************************************/
     /* Variables                            */
     /****************************************/
