@@ -80,8 +80,53 @@ const numToBytes32 = (num) => {
     return addHexPrefix(strippedNum.padStart(32 * 2, "0"))
 }
 
+
+const stringToBytes32 = (str) => {
+    return ethers.utils.formatBytes32String(str);
+}
+
+
+// Generate randomized String
+function generateString(length) {
+    return Math.random().toString(32).substring(2, length);
+}
+
+// Randomly chooses from predefined set of nationalities
+function generateNationality() {
+    var nationalities = ["Austria", "Egypt", "Germany", "Japan", "Turkey", "China", "Russia"];
+    return nationalities[Math.floor(Math.random() * nationalities.length)];
+}
+
+// Generates 1 oder 2 
+function generateVote() {
+    return Math.floor(Math.random() * 2) + 1;
+
+}
+
+// Generates random integer 1 <= limit
+function generateVotingDays(limit) {
+    return Math.floor(Math.random() * limit) + 1;
+}
+
+
+async function generateRandomWallet() {
+    const wallet = ethers.Wallet.createRandom().connect(ethers.provider);
+    await ethers.provider.send("hardhat_setBalance", [
+        wallet.address,
+        "0x56BC75E2D63100000", // 100 ETH
+    ]);
+    return wallet;
+ }
+
+
 module.exports = {
     autoFundCheck,
     verify,
     numToBytes32,
+    stringToBytes32,
+    generateString, 
+    generateNationality,
+    generateVote, 
+    generateVotingDays,
+    generateRandomWallet
 }

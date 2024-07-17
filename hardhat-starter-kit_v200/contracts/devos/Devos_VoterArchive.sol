@@ -9,16 +9,27 @@ import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 //import "@chainlink/contracts/src/v0.8/interfaces/LinkTokenInterface.sol";
 
 /**
+ * @dev
  * Request testnet LINK and ETH here: https://faucets.chain.link/
  * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/docs/link-token-contracts/
- * 
  * Example taken from https://docs.chain.link/any-api/get-request/examples/single-word-response
+ */
+
+
+/**
+ * @title Devos_VoterArchive
+ * @author ThompsonA93
+ * @notice Smart contract handling decentralized authorization procedures for the devos-project
  */
 contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 
-    bytes32 public jobId;
-    uint256 public fee;
+
+    address private oracle;
+    address private link;
+    bytes32 private jobId;
+    uint256 private fee;
+
 
     address public voter;
     string public nationality;
@@ -32,24 +43,56 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
      * Sepolia Testnet details:
      * Link Token: 0x779877A7B0D9E8603169DdbD7836e478b4624789
      * Oracle: 0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD (Chainlink DevRel)
-     * jobId: ca98366cc7314957b8c012c72f05aeeb
+     * jobId: 7d80a6386ef543a3abb52817f6707e3b
+     * fee: (1 * LINK_DIVISIBILITY) / 100
      *
      */
-    constructor() ConfirmedOwner(msg.sender) {
-        setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);
-        setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);
-        jobId = "7d80a6386ef543a3abb52817f6707e3b";
-        fee = (1 * LINK_DIVISIBILITY) / 100; // 0,1 * 10**18 (Varies by network and job)
-    }
+    constructor(address _oracle, address _link, bytes32 _jobId, uint256 _fee) ConfirmedOwner(msg.sender) {
+        if(_oracle == address(0)){
+            setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);
+        }else{
+            setChainlinkOracle(_oracle);
+        }
+        oracle = _oracle;
 
+        if (_link == address(0)) {
+            setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);
+        } else {
+            setChainlinkToken(_link);
+        }
+        link = _link;
+
+        if(_jobId.length == 0){
+            jobId = "7d80a6386ef543a3abb52817f6707e3b";
+        } else  {
+            jobId = _jobId;
+        }
+
+        if(_fee == 0){
+            fee = (1 * LINK_DIVISIBILITY) / 100; // 0,1 * 10**18 (Varies by network and job)
+        } else {
+            fee = _fee;
+        }
+
+
+        //setChainlinkToken(0x779877A7B0D9E8603169DdbD7836e478b4624789);
+        //setChainlinkOracle(0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD);
+        //jobId = "7d80a6386ef543a3abb52817f6707e3b";
+        //fee = (1 * LINK_DIVISIBILITY) / 100; // 0,1 * 10**18 (Varies by network and job)
+    }
+    
+    /**
+     * @dev modifier enforcing single check of an voter. Disregards later re-checking
+     * @param _voter as address to check
+     */
     modifier wasNotChecked(address _voter){
         require(bytes(voterRegistry[_voter]).length == 0);
         _;
     }
 
     /**
-     * Create a Chainlink request to retrieve API response, find the target
-     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
+     * @notice Sends request as ChainlinkClient to fetch HTTP-API from backend
+     * @param _voter as address to check
      */
     function requestNationalityData(address _voter) wasNotChecked(_voter) public returns (bytes32 requestId) {
         voter = _voter;
@@ -69,16 +112,27 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
         return sendChainlinkRequest(req, fee);
     }
 
+    /**
+     * @notice Requests nationality data on given address
+     * @param _voter as address whose data will be returned
+     * @return nationality as string from mapping
+     */
     function getNationalityData(address _voter) external view returns (string memory) {
         return voterRegistry[_voter];
     }
 
+    /**
+     * @notice Procedure solely for quick demonstration and debugging purposes. For the actual workflow, use requestNationalityData(address)
+     * @dev Additionally if addresses not native to the devos-project need to be added, this can be done here
+     * @param _voter as address to map a nationality to
+     * @param _nationality as string of a nationality mapped to the _voter
+     */
     function DEBUG_setNationalityData(address _voter, string memory _nationality) public {
         voterRegistry[_voter] = _nationality;
     }
 
     /**
-     * @dev Ignore this function.
+     * @notice Automatic callback procedure for requestNationalityData(address). Finishes up the asynchronous chainlink call and writes data to structures.
      */
     function fulfill(
         bytes32 _requestId,
@@ -90,12 +144,12 @@ contract Devos_VoterArchive is ChainlinkClient, ConfirmedOwner {
     }
 
     /**
-     * Allow withdraw of Link tokens from the contract
+     * @notice allow withdrawal of Link tokens from the contract. Only allowed to be executed by the owner.
      */
     function withdrawLink() public onlyOwner {
-        LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
+        LinkTokenInterface lti = LinkTokenInterface(chainlinkTokenAddress());
         require(
-            link.transfer(msg.sender, link.balanceOf(address(this))),
+            lti.transfer(msg.sender, lti.balanceOf(address(this))),
             "Unable to transfer"
         );
     }

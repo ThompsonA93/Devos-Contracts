@@ -3,19 +3,11 @@
 Based on https://github.com/smartcontractkit/hardhat-starter-kit.
 
 
-*Note*: v211 is based on newer version of chainlink which uses Chainlink Functions. Boilerplate-Code has not been developed for API-Calls.
+*Note*: v211 is based on newer version of chainlink which uses Chainlink Functions. Boilerplate-Code has not been developed for API-Calls (see ZIP).
 
 
 | Contract | Address |
 | --- | --- |
-| Archive | 0x83e6942A75265201890BEfbBcB685b4292E59497 | 
-
-
-
-| Ballot-Parameters | Value |
-| --- | --- |
-| ArchiveAddress | 0x83e6942A75265201890BEfbBcB685b4292E59497 |
-| Oracle | 0x6090149792dAAeE9D1D568c9f9a6F6B46AA29eFD |
-| JobID | 7d80a6386ef543a3abb52817f6707e3b|
-| Fee | 0 |
-| Link | 0x779877A7B0D9E8603169DdbD7836e478b4624789 |
+| BalllotArchive | 0x7b28872977D4271a52dE16693a4cfFbb9ed0e849 | 
+| VoterArchive | 0x7e6c25ac921e657c77c55FA0c1A7678B27Ea05F3 | 
+| Test-Ballot | 0xA808C549Ca2F993ca0619e9f9f0181078e5bB8aD |

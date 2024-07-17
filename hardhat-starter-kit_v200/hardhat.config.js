@@ -59,6 +59,9 @@ module.exports = {
                 blockNumber: FORKING_BLOCK_NUMBER,
                 enabled: false,
             },
+            accounts: {
+            //    count: 50,
+            },
             chainId: 31337,
         },
         localhost: {

@@ -4,13 +4,9 @@ pragma solidity ^0.8.12;
 /**
  * @title BallotArchive
  * @author ThompsonA93
- * @notice Version 3; Stores ballots and their creators in form of mappings
- * @dev Storing data by external smart contract calls.
+ * @notice Stores ballots and their creators in form of mappings for the devos-project
  */
 contract Devos_BallotArchive {
-    /****************************************/
-    /* Variables                            */
-    /****************************************/
     address public archiveAddress;
     address public archiveOwner;
 
@@ -34,9 +30,7 @@ contract Devos_BallotArchive {
      */
     mapping(uint => address) ballotsRLT;
 
-    /****************************************/
-    /* Modifiers                            */
-    /****************************************/
+
     /**
      * Require that one Ballot has exactly one Address.
      */
@@ -45,9 +39,6 @@ contract Devos_BallotArchive {
         _;
     }
 
-    /****************************************/
-    /* Functions                            */
-    /****************************************/
     /**
      * @dev Setup contract with ownership. TODO -- May be relevant later
      */
