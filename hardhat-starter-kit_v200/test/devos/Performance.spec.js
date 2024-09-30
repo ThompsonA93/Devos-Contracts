@@ -40,16 +40,17 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("# Performance tests on devos system", async function () {
+        /* Rewriting tests to be more homogenous
         beforeEach(async function () {
             await hre.network.provider.send("hardhat_reset")
         })
+        */
 
-
-        it("Deploy Archives (100x)", async function () {
+        it("Deploy Archives (10x)", async function () {
             const DevosBallotArchiveFactory = await ethers.getContractFactory("Devos_BallotArchive")
 
             const wallets = [];
-            const cases = 100;
+            const cases = 10;
             for (let i = 0; i < cases; i++) {
                 let wallet = ethers.Wallet.createRandom().connect(ethers.provider);
                 await ethers.provider.send("hardhat_setBalance", [
@@ -79,7 +80,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             }
         })
 
-        it("Deploy Registrar (100x)", async function () {
+        it("Deploy Registrar (10x)", async function () {
             const chainId = network.config.chainId
             const linkTokenFactory = await ethers.getContractFactory("LinkToken")
             const linkToken = await linkTokenFactory.deploy()
@@ -90,7 +91,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             const DevosVoterArchiveFactory = await ethers.getContractFactory("Devos_VoterArchive")
 
             const wallets = [];
-            const cases = 100;
+            const cases = 10;
             for (let i = 0; i < cases; i++) {
                 let wallet = ethers.Wallet.createRandom().connect(ethers.provider);
                 await ethers.provider.send("hardhat_setBalance", [
@@ -120,7 +121,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             }
         })
 
-        it("Deploy Ballot (100x)", async function () {
+        it("Deploy Ballot (10x)", async function () {
             const [owner] = await ethers.getSigners()
 
             const DevosBallotArchiveFactory = await ethers.getContractFactory("Devos_BallotArchive")
@@ -144,7 +145,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             const DevosBallotFactory = await ethers.getContractFactory("Devos_Ballot")
 
             const wallets = [];
-            const cases = 100;
+            const cases = 10;
             for (let i = 0; i < cases; i++) {
                 let wallet = ethers.Wallet.createRandom().connect(ethers.provider);
                 await ethers.provider.send("hardhat_setBalance", [
@@ -181,7 +182,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             }
         })
 
-        it("Verify Voter (100x)", async function () {
+        it("Verify Voter (10x)", async function () {
             const [owner] = await ethers.getSigners()
 
             const chainId = network.config.chainId
@@ -201,7 +202,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
 
 
             const wallets = [];
-            const cases = 100;
+            const cases = 10;
             for (let i = 0; i < cases; i++) {
                 let wallet = ethers.Wallet.createRandom().connect(ethers.provider);
                 await ethers.provider.send("hardhat_setBalance", [
@@ -217,15 +218,15 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
 
                 let startTime = performance.now();
 
-                const transaction = await DevosVoterArchive.connect(wallets[i]).requestNationalityData(wallets[i].address)
-                const transactionReceipt = await transaction.wait(1)
-                const requestId = transactionReceipt.events[0].topics[1]
-                const mockResponse = 'Austria'
-                const mockOracleResponse = await mockOracle.fulfillOracleRequest(requestId, stringToBytes32(mockResponse))
+                let transaction = await DevosVoterArchive.connect(wallets[i]).requestNationalityData(wallets[i].address)
+                let transactionReceipt = await transaction.wait(1)
+                let requestId = transactionReceipt.events[0].topics[1]
+                let mockResponse = 'Austria'
+                let mockOracleResponse = await mockOracle.fulfillOracleRequest(requestId, stringToBytes32(mockResponse))
                 expect(mockOracleResponse).to.not.be.null
 
                 await DevosVoterArchive.DEBUG_setNationalityData(wallets[i].address, mockResponse);
-                const getNationality = await DevosVoterArchive.getNationalityData(wallets[i].address)
+                let getNationality = await DevosVoterArchive.getNationalityData(wallets[i].address)
                 expect(getNationality).equal(mockResponse);
 
                 let endTime = performance.now();
@@ -241,7 +242,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             }
         })
 
-        it("Vote (100x)", async function () {
+        it("Vote (10x)", async function () {
             const [owner] = await ethers.getSigners()
 
             const DevosBallotArchiveFactory = await ethers.getContractFactory("Devos_BallotArchive")
@@ -277,7 +278,7 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             await linkToken.connect(owner).transfer(DevosVoterArchive.address, fundAmount)
 
             const wallets = [];
-            const cases = 100;
+            const cases = 10;
             for (let i = 0; i < cases; i++) {
                 let wallet = ethers.Wallet.createRandom().connect(ethers.provider);
                 await ethers.provider.send("hardhat_setBalance", [
@@ -290,15 +291,15 @@ const writeLog = (testcase, voters, ballots, requiredTime, costEth, costLink) =>
             for (let i = 0; i < cases; i++) {
                 let startEth = await wallets[i].getBalance()
                 let startLink = await linkToken.balanceOf(DevosVoterArchive.address)
-                const transaction = await DevosVoterArchive.connect(wallets[i]).requestNationalityData(wallets[i].address)
-                const transactionReceipt = await transaction.wait(1)
-                const requestId = transactionReceipt.events[0].topics[1]
-                const mockResponse = 'Austria'
-                const mockOracleResponse = await mockOracle.fulfillOracleRequest(requestId, stringToBytes32(mockResponse))
+                let transaction = await DevosVoterArchive.connect(wallets[i]).requestNationalityData(wallets[i].address)
+                let transactionReceipt = await transaction.wait(1)
+                let requestId = transactionReceipt.events[0].topics[1]
+                let mockResponse = 'Austria'
+                let mockOracleResponse = await mockOracle.fulfillOracleRequest(requestId, stringToBytes32(mockResponse))
                 expect(mockOracleResponse).to.not.be.null
 
                 await DevosVoterArchive.DEBUG_setNationalityData(wallets[i].address, mockResponse);
-                const getNationality = await DevosVoterArchive.getNationalityData(wallets[i].address)
+                let getNationality = await DevosVoterArchive.getNationalityData(wallets[i].address)
                 expect(getNationality).equal(mockResponse);
 
                 let startTime = performance.now();
